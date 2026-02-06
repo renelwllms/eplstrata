@@ -18,45 +18,55 @@ const MobileAccess = () => {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-10 lg:grid-cols-2 lg:items-center">
-          <div className="space-y-4 text-base text-body-color">
-            <p>
-              Modern service businesses aren’t tied to desks — and neither is Strata.
-              Every Strata feature is fully usable on mobile, giving your team real-time
-              access to jobs, schedules, time tracking, and updates while on the move.
-            </p>
-            <p>No stripped-down “mobile version”. No waiting to get back to a computer.</p>
-            <p className="font-semibold text-black">Just full functionality, anywhere.</p>
-            <ul className="mt-4 space-y-2">
-              <li>View and update jobs on the go</li>
-              <li>Track time directly from your phone</li>
-              <li>Check schedules and assignments instantly</li>
-              <li>See team workload and job status in real time</li>
-              <li>Access quotes, job details, and notes anywhere</li>
-            </ul>
-          </div>
+        <div className="mt-12 space-y-10">
+          {[
+            {
+              title: "Job Overview, Instantly",
+              description:
+                "A live view of each job’s status, priority, and next action so crews know what matters most the moment they open the app.",
+              src: "/images/mobile/mobile-1.jpg",
+              alt: "Strata mobile job overview screen"
+            },
+            {
+              title: "Time Tracking in Seconds",
+              description:
+                "Start, pause, and submit time on the spot — no back-office catch-up needed to keep billing accurate.",
+              src: "/images/mobile/mobile-2.jpg",
+              alt: "Strata mobile time tracking screen"
+            },
+            {
+              title: "Field Updates Without Friction",
+              description:
+                "Capture notes, photos, and progress updates while you’re on-site so the office and customers stay in sync.",
+              src: "/images/mobile/mobile-3.jpg",
+              alt: "Strata mobile field update screen"
+            }
+          ].map((item, index) => (
+            <div
+              key={item.title}
+              className={`grid gap-8 lg:grid-cols-2 lg:items-center ${
+                index % 2 === 1 ? "lg:[&>div:first-child]:order-2" : ""
+              }`}
+            >
+              <div className="space-y-4 text-base text-body-color">
+                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">
+                  Mobile Workflow
+                </p>
+                <h3 className="text-2xl font-bold text-black">{item.title}</h3>
+                <p>{item.description}</p>
+              </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              "/images/mobile/mobile-1.jpg",
-              "/images/mobile/mobile-2.jpg",
-              "/images/mobile/mobile-3.jpg",
-              "/images/mobile/mobile-4.jpg"
-            ].map((src, index) => (
-              <div
-                key={src}
-                className="overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-three"
-              >
+              <div className="overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-three">
                 <Image
-                  src={src}
-                  alt={`Strata mobile screen ${index + 1}`}
-                  width={520}
-                  height={1040}
-                  className="h-56 w-full object-cover sm:h-64"
+                  src={item.src}
+                  alt={item.alt}
+                  width={560}
+                  height={1120}
+                  className="h-auto w-full object-contain"
                 />
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
         <div className="mt-12 rounded-2xl bg-white p-6 text-center shadow-three">

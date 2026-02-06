@@ -77,23 +77,56 @@ export default function MobileAccessPage() {
             Use real screenshots from your app once ready. These placeholder visuals are just
             to guide layout and intent.
           </p>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+          <div className="mt-8 space-y-10">
             {[
-              "/images/mobile/mobile-5.jpg",
-              "/images/mobile/mobile-6.jpg",
-              "/images/mobile/mobile-7.jpg"
-            ].map((src, index) => (
+              {
+                title: "Job Status at a Glance",
+                description:
+                  "See what’s scheduled, in progress, or overdue without digging through spreadsheets.",
+                src: "/images/mobile/mobile-5.jpg",
+                alt: "Strata mobile job status screen"
+              },
+              {
+                title: "Fast Field Updates",
+                description:
+                  "Capture notes, photos, and progress while you’re on site so everyone stays aligned.",
+                src: "/images/mobile/mobile-6.jpg",
+                alt: "Strata mobile field update screen"
+              },
+              {
+                title: "Accurate Time, Instantly",
+                description:
+                  "Start and stop timers on the job to keep billing and reporting clean.",
+                src: "/images/mobile/mobile-7.jpg",
+                alt: "Strata mobile time tracking screen"
+              }
+            ].map((item, index) => (
               <div
-                key={src}
-                className="rounded-2xl border border-sand-200 bg-white p-3 shadow-three"
+                key={item.title}
+                className={`grid gap-8 lg:grid-cols-2 lg:items-center ${
+                  index % 2 === 1 ? "lg:[&>div:first-child]:order-2" : ""
+                }`}
               >
-                <Image
-                  src={src}
-                  alt={`Strata mobile view ${index + 1}`}
-                  width={520}
-                  height={1040}
-                  className="h-auto w-full object-contain"
-                />
+                <div className="space-y-4 text-base text-body-color">
+                  <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">
+                    Mobile Workflow
+                  </p>
+                  <h4 className="text-2xl font-bold text-black dark:text-white">
+                    {item.title}
+                  </h4>
+                  <p>{item.description}</p>
+                </div>
+
+                <div className="rounded-2xl border border-sand-200 bg-white p-3 shadow-three">
+                  <Image
+                    src={item.src}
+                    alt={item.alt}
+                    width={560}
+                    height={1120}
+                    className="h-auto w-full object-contain"
+                  />
+                </div>
               </div>
             ))}
           </div>
