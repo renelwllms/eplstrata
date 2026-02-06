@@ -1,0 +1,1021 @@
+// Prisma schema for EdgePoint Strata
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  STAFF
+}
+
+enum PlatformRole {
+  SUPER_ADMIN
+}
+
+enum JobStatus {
+  QUOTE
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DECLINED
+}
+
+enum QuoteApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  VOID
+}
+
+enum InvoiceBillingMode {
+  ACTUAL
+  QUOTED
+  PROGRESS
+  PERCENT_QUOTE
+}
+
+enum TaxMode {
+  EXCLUSIVE
+  INCLUSIVE
+}
+
+enum TaxDiscountMode {
+  TAX_BEFORE_DISCOUNT
+  TAX_AFTER_DISCOUNT
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  CANCELLED
+}
+
+enum BillingPeriod {
+  MONTH
+  YEAR
+}
+
+enum PlanCode {
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum ClientStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum NumberEntityType {
+  JOB
+  QUOTE
+  INVOICE
+  PO
+}
+
+enum TimesheetView {
+  WEEKLY
+  DAILY
+}
+
+enum CustomFieldEntity {
+  CLIENT
+  JOB
+  QUOTE
+  INVOICE
+  LEAD
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  DATE
+  SELECT
+  MULTI_SELECT
+  CHECKBOX
+}
+
+enum NotificationType {
+  SYSTEM
+  JOB_STATUS
+  LEAD_STATUS
+  BILLING
+  DOCUMENT
+}
+
+enum StorageProvider {
+  LOCAL
+}
+
+enum LeadActivityType {
+  TASK
+  CALL
+  MEETING
+  EMAIL
+  NOTE
+}
+
+enum DocumentEntityType {
+  CLIENT
+  JOB
+  QUOTE
+  INVOICE
+  LEAD
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  settings        TenantSettings?
+  memberships     TenantMembership[]
+  subscriptions   Subscription[]
+  numberSequences NumberSequence[]
+  auditLogs       AuditLog[]
+  activeUsers     User[] @relation("ActiveTenant")
+
+  clients      Client[]
+  contacts     Contact[]
+  jobs         Job[]
+  tasks        TaskCatalog[]
+  jobTasks     JobTask[]
+  jobAssignments JobAssignment[]
+  phases       Phase[]
+  timeEntries  TimeEntry[]
+  costEntries  CostEntry[]
+  quotes       Quote[]
+  quoteItems   QuoteLineItem[]
+  invoices     Invoice[]
+  invoiceItems InvoiceLineItem[]
+  payments     Payment[]
+  quoteTemplates QuoteTemplate[]
+  invoiceTemplates InvoiceTemplate[]
+  invoiceJobLinks InvoiceJobLink[]
+  customFields CustomFieldDefinition[]
+  customFieldValues CustomFieldValue[]
+  notifications Notification[]
+  uploads      Upload[]
+  leadStages   LeadStage[]
+  leads        Lead[]
+  leadActivities LeadActivity[]
+  leadTemplates LeadTemplate[]
+  documents   Document[]
+  documentLinks DocumentLink[]
+  jobStages   JobStage[]
+  jobMilestones JobMilestone[]
+  jobRecurrenceRules JobRecurrenceRule[]
+  adminImpersonations AdminImpersonation[]
+  capacitySettings CapacitySettings?
+  capacityOverrides CapacityOverride[]
+  capacityLeaves CapacityLeave[]
+
+  @@index([name])
+}
+
+model TenantSettings {
+  id                 String           @id @default(cuid())
+  tenantId           String           @unique
+  businessName       String?
+  businessEmail      String?
+  businessPhone      String?
+  businessWebsite    String?
+  businessAddress    String?          @db.Text
+  logoUrl            String?
+  currency           String           @default("NZD")
+  timezone           String           @default("Pacific/Auckland")
+  gstRate            Decimal          @default(0.15) @db.Decimal(5, 4)
+  taxMode            TaxMode          @default(EXCLUSIVE)
+  taxDiscountMode    TaxDiscountMode  @default(TAX_BEFORE_DISCOUNT)
+  timeRoundingMinutes Int            @default(15)
+  defaultBillable     Boolean        @default(true)
+  timesheetView       TimesheetView  @default(WEEKLY)
+  defaultTermsQuote  String?          @db.Text
+  defaultTermsInvoice String?         @db.Text
+  leadCaptureToken   String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+model CapacitySettings {
+  id                String   @id @default(cuid())
+  tenantId          String   @unique
+  workingHoursPerDay Int     @default(8)
+  workingDays       String   @default("MON,TUE,WED,THU,FRI")
+  allowOvertime     Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+model CapacityOverride {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  userId             String
+  weeklyCapacityHours Int
+  role               String?
+  startDate          DateTime? @db.Date
+  endDate            DateTime? @db.Date
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, userId])
+}
+
+model CapacityLeave {
+  id            String   @id @default(cuid())
+  tenantId      String
+  userId        String
+  startDate     DateTime @db.Date
+  endDate       DateTime @db.Date
+  hoursPerDay   Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, userId])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  passwordHash String
+  activeTenantId String?
+  platformRole PlatformRole?
+  mustResetPassword Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships TenantMembership[]
+  timeEntries TimeEntry[]
+  auditLogs   AuditLog[]
+  notifications Notification[]
+  uploads      Upload[]
+  ownedLeads   Lead[] @relation("LeadOwner")
+  createdDocuments Document[] @relation("DocumentCreator")
+  adminImpersonation AdminImpersonation? @relation("AdminImpersonation")
+  impersonatedSessions AdminImpersonation[] @relation("ImpersonatedUser")
+
+  activeTenant Tenant? @relation("ActiveTenant", fields: [activeTenantId], references: [id])
+  jobAssignments JobAssignment[]
+  capacityOverrides CapacityOverride[]
+  capacityLeaves CapacityLeave[]
+}
+
+model AdminImpersonation {
+  id          String   @id @default(cuid())
+  adminUserId String   @unique
+  tenantId    String
+  userId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  adminUser User   @relation("AdminImpersonation", fields: [adminUserId], references: [id])
+  tenant    Tenant @relation(fields: [tenantId], references: [id])
+  user      User?  @relation("ImpersonatedUser", fields: [userId], references: [id])
+
+  @@index([tenantId])
+  @@index([userId])
+}
+
+model TenantMembership {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([tenantId, userId])
+  @@index([tenantId])
+}
+
+model Plan {
+  id            String        @id @default(cuid())
+  code          PlanCode      @unique
+  name          String
+  priceCents    Int
+  billingPeriod BillingPeriod
+  seatLimit     Int
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  features      PlanFeature[]
+  subscriptions Subscription[]
+}
+
+model PlanFeature {
+  id        String   @id @default(cuid())
+  planId    String
+  code      String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  plan Plan @relation(fields: [planId], references: [id])
+
+  @@unique([planId, code])
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  tenantId           String
+  planId             String
+  status             SubscriptionStatus
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  @@index([tenantId])
+}
+
+model Client {
+  id           String       @id @default(cuid())
+  tenantId     String
+  name         String
+  status       ClientStatus @default(ACTIVE)
+  billingEmail String?
+  phone        String?
+  defaultBillableRate Decimal? @db.Decimal(12, 2)
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  region       String?
+  postalCode   String?
+  country      String?
+  notes        String?      @db.Text
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  contacts Contact[]
+  jobs     Job[]
+  quotes   Quote[]
+  invoices Invoice[]
+
+  @@unique([id, tenantId])
+  @@index([tenantId])
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  tenantId  String
+  clientId  String?
+  name      String
+  email     String?
+  phone     String?
+  roleTitle String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  client Client? @relation(fields: [clientId, tenantId], references: [id, tenantId])
+
+  @@unique([id, tenantId])
+  @@index([tenantId])
+}
+
+model TaskCatalog {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  name                String
+  defaultBillableRate Decimal? @db.Decimal(12, 2)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id])
+  jobTasks   JobTask[]
+  timeEntries TimeEntry[]
+
+  @@unique([id, tenantId])
+  @@index([tenantId])
+}
+
+model Job {
+  id            String    @id @default(cuid())
+  tenantId      String
+  clientId      String
+  jobNumber     String
+  name          String
+  status        JobStatus @default(QUOTE)
+  jobStageId    String?
+  billableRateOverride Decimal? @db.Decimal(12, 2)
+  recurrenceRuleId String?
+  startDate     DateTime? @db.Date
+  dueDate       DateTime? @db.Date
+  budgetMinutes Int?
+  inboundEmail  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  client   Client @relation(fields: [clientId, tenantId], references: [id, tenantId])
+  jobStage JobStage? @relation(fields: [jobStageId], references: [id])
+  recurrenceRule JobRecurrenceRule? @relation(fields: [recurrenceRuleId], references: [id])
+  tasks    JobTask[]
+  phases   Phase[]
+  assignments JobAssignment[]
+  timeEntries TimeEntry[]
+  costEntries CostEntry[]
+  quotes   Quote[]
+  invoices Invoice[]
+  invoiceJobLinks InvoiceJobLink[]
+  milestones JobMilestone[]
+
+  @@unique([tenantId, jobNumber])
+  @@unique([id, tenantId])
+  @@index([tenantId])
+  @@index([tenantId, status])
+}
+
+model JobTask {
+  id            String   @id @default(cuid())
+  tenantId      String
+  jobId         String
+  taskCatalogId String
+  billableRate  Decimal? @db.Decimal(12, 2)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  job    Job    @relation(fields: [jobId, tenantId], references: [id, tenantId])
+  task   TaskCatalog @relation(fields: [taskCatalogId, tenantId], references: [id, tenantId])
+
+  @@unique([tenantId, jobId, taskCatalogId])
+  @@index([tenantId])
+}
+
+model Phase {
+  id            String   @id @default(cuid())
+  tenantId      String
+  jobId         String
+  name          String
+  budgetMinutes Int?
+  customField   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  job    Job    @relation(fields: [jobId, tenantId], references: [id, tenantId])
+  timeEntries TimeEntry[]
+
+  @@unique([id, tenantId])
+  @@index([tenantId])
+}
+
+model TimeEntry {
+  id              String   @id @default(cuid())
+  tenantId        String
+  userId          String
+  jobId           String
+  taskCatalogId   String
+  phaseId         String?
+  invoiceId       String?
+  date            DateTime @db.Date
+  startTime       DateTime?
+  endTime         DateTime?
+  source          String?  // manual, timer, import
+  durationMinutes Int
+  billable        Boolean  @default(true)
+  isLocked        Boolean  @default(false)
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+  job    Job    @relation(fields: [jobId, tenantId], references: [id, tenantId])
+  task   TaskCatalog @relation(fields: [taskCatalogId, tenantId], references: [id, tenantId])
+  phase  Phase? @relation(fields: [phaseId, tenantId], references: [id, tenantId])
+  invoice Invoice? @relation(fields: [invoiceId, tenantId], references: [id, tenantId])
+
+  @@unique([id, tenantId])
+  @@index([tenantId])
+  @@index([tenantId, date])
+  @@index([tenantId, jobId])
+  @@index([tenantId, invoiceId])
+}
+
+model JobAssignment {
+  id        String   @id @default(cuid())
+  tenantId  String
+  jobId     String
+  userId    String
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  job    Job    @relation(fields: [jobId, tenantId], references: [id, tenantId])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([tenantId, jobId, userId])
+  @@index([tenantId])
+  @@index([tenantId, userId])
+}
+
+model CostEntry {
+  id            String   @id @default(cuid())
+  tenantId      String
+  jobId         String
+  invoiceId     String?
+  description   String
+  qty           Decimal  @db.Decimal(12, 2)
+  unitCost      Decimal  @db.Decimal(12, 2)
+  markupPercent Decimal  @db.Decimal(5, 2)
+  billable      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  job    Job    @relation(fields: [jobId, tenantId], references: [id, tenantId])
+  invoice Invoice? @relation(fields: [invoiceId, tenantId], references: [id, tenantId])
+
+  @@unique([id, tenantId])
+  @@index([tenantId])
+  @@index([tenantId, jobId])
+  @@index([tenantId, invoiceId])
+}
+
+model Quote {
+  id              String      @id @default(cuid())
+  tenantId        String
+  clientId        String
+  jobId           String?
+  templateId      String?
+  number          String
+  status          QuoteStatus @default(DRAFT)
+  approvalStatus  QuoteApprovalStatus @default(PENDING)
+  isMaster        Boolean     @default(false)
+  currency        String      @default("NZD")
+  gstRate         Decimal     @db.Decimal(5, 4)
+  taxMode         TaxMode
+  taxDiscountMode TaxDiscountMode
+  subtotal        Decimal     @db.Decimal(12, 2)
+  taxTotal        Decimal     @db.Decimal(12, 2)
+  discountTotal   Decimal     @db.Decimal(12, 2)
+  total           Decimal     @db.Decimal(12, 2)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  client Client @relation(fields: [clientId, tenantId], references: [id, tenantId])
+  job    Job?   @relation(fields: [jobId, tenantId], references: [id, tenantId])
+  template QuoteTemplate? @relation(fields: [templateId], references: [id])
+  lineItems QuoteLineItem[]
+
+  @@unique([tenantId, number])
+  @@unique([id, tenantId])
+  @@index([tenantId])
+}
+
+model QuoteLineItem {
+  id              String  @id @default(cuid())
+  tenantId        String
+  quoteId         String
+  description     String
+  quantity        Decimal @db.Decimal(12, 2)
+  rate            Decimal @db.Decimal(12, 2)
+  discountPercent Decimal @default(0) @db.Decimal(5, 2)
+  isOptional      Boolean @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  quote  Quote  @relation(fields: [quoteId, tenantId], references: [id, tenantId])
+
+  @@unique([id, tenantId])
+  @@index([tenantId])
+}
+
+model QuoteTemplate {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  layout    String   @default("STANDARD")
+  defaults  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  quotes Quote[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model Invoice {
+  id              String       @id @default(cuid())
+  tenantId        String
+  clientId        String
+  jobId           String?
+  templateId      String?
+  number          String
+  status          InvoiceStatus @default(DRAFT)
+  billingMode     InvoiceBillingMode @default(ACTUAL)
+  progressPercent Int?
+  currency        String       @default("NZD")
+  gstRate         Decimal      @db.Decimal(5, 4)
+  taxMode         TaxMode
+  taxDiscountMode TaxDiscountMode
+  subtotal        Decimal      @db.Decimal(12, 2)
+  taxTotal        Decimal      @db.Decimal(12, 2)
+  discountTotal   Decimal      @db.Decimal(12, 2)
+  total           Decimal      @db.Decimal(12, 2)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  client Client @relation(fields: [clientId, tenantId], references: [id, tenantId])
+  job    Job?   @relation(fields: [jobId, tenantId], references: [id, tenantId])
+  template InvoiceTemplate? @relation(fields: [templateId], references: [id])
+  lineItems InvoiceLineItem[]
+  payments  Payment[]
+  timeEntries TimeEntry[]
+  costEntries CostEntry[]
+  jobLinks InvoiceJobLink[]
+
+  @@unique([tenantId, number])
+  @@unique([id, tenantId])
+  @@index([tenantId])
+}
+
+model InvoiceLineItem {
+  id              String  @id @default(cuid())
+  tenantId        String
+  invoiceId       String
+  description     String
+  quantity        Decimal @db.Decimal(12, 2)
+  rate            Decimal @db.Decimal(12, 2)
+  discountPercent Decimal @default(0) @db.Decimal(5, 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  invoice Invoice @relation(fields: [invoiceId, tenantId], references: [id, tenantId])
+
+  @@unique([id, tenantId])
+  @@index([tenantId])
+}
+
+model InvoiceTemplate {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  layout    String   @default("STANDARD")
+  defaults  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  invoices Invoice[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model InvoiceJobLink {
+  id        String   @id @default(cuid())
+  tenantId  String
+  invoiceId String
+  jobId     String
+  createdAt DateTime @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  job     Job     @relation(fields: [jobId, tenantId], references: [id, tenantId])
+
+  @@unique([tenantId, invoiceId, jobId])
+  @@index([tenantId, jobId])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  tenantId    String
+  invoiceId   String
+  amount      Decimal  @db.Decimal(12, 2)
+  paymentDate DateTime @db.Date
+  reference   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  invoice Invoice @relation(fields: [invoiceId, tenantId], references: [id, tenantId])
+
+  @@unique([id, tenantId])
+  @@index([tenantId])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  tenantId    String
+  actorUserId String?
+  action      String
+  entityType  String
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id])
+  actorUser User?  @relation(fields: [actorUserId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, entityType, entityId])
+}
+
+model NumberSequence {
+  id          String           @id @default(cuid())
+  tenantId    String
+  entityType  NumberEntityType
+  prefix      String
+  nextNumber  Int
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, entityType])
+  @@index([tenantId])
+}
+
+model CustomFieldDefinition {
+  id          String           @id @default(cuid())
+  tenantId    String
+  entityType  CustomFieldEntity
+  name        String
+  key         String
+  fieldType   CustomFieldType
+  required    Boolean          @default(false)
+  options     Json?
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  values CustomFieldValue[]
+
+  @@unique([tenantId, entityType, key])
+  @@index([tenantId, entityType])
+}
+
+model CustomFieldValue {
+  id           String           @id @default(cuid())
+  tenantId     String
+  definitionId String
+  entityType   CustomFieldEntity
+  entityId     String
+  value        Json?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  tenant     Tenant @relation(fields: [tenantId], references: [id])
+  definition CustomFieldDefinition @relation(fields: [definitionId], references: [id])
+
+  @@unique([tenantId, definitionId, entityId])
+  @@index([tenantId, entityType, entityId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  tenantId  String
+  userId    String
+  type      NotificationType @default(SYSTEM)
+  title     String
+  body      String?
+  entityType String?
+  entityId   String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, userId, readAt])
+}
+
+model Upload {
+  id              String          @id @default(cuid())
+  tenantId        String
+  userId          String?
+  filename        String
+  mimeType        String
+  sizeBytes       Int
+  storageProvider StorageProvider @default(LOCAL)
+  storageKey      String
+  url             String?
+  createdAt       DateTime        @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
+  documents Document[]
+
+  @@index([tenantId])
+  @@index([tenantId, storageProvider])
+}
+
+model LeadStage {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  color     String?  // hex or named token
+  sortOrder Int      @default(0)
+  isClosed  Boolean  @default(false)
+  isWon     Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  leads  Lead[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, sortOrder])
+}
+
+model Lead {
+  id                String   @id @default(cuid())
+  tenantId          String
+  stageId           String
+  ownerUserId       String?
+  name              String
+  company           String?
+  email             String?
+  phone             String?
+  estimatedValue    Decimal? @db.Decimal(12, 2)
+  probability       Int?     // 0-100
+  expectedCloseDate DateTime? @db.Date
+  source            String?
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  stage  LeadStage @relation(fields: [stageId], references: [id])
+  owner  User? @relation("LeadOwner", fields: [ownerUserId], references: [id])
+  activities LeadActivity[]
+
+  @@index([tenantId, stageId])
+  @@index([tenantId, ownerUserId])
+}
+
+model LeadActivity {
+  id        String           @id @default(cuid())
+  tenantId  String
+  leadId    String
+  type      LeadActivityType @default(TASK)
+  title     String
+  dueDate   DateTime?        @db.Date
+  completedAt DateTime?
+  notes     String?          @db.Text
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  lead   Lead   @relation(fields: [leadId], references: [id])
+
+  @@index([tenantId, leadId])
+  @@index([tenantId, dueDate])
+}
+
+model LeadTemplate {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  defaults  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model Document {
+  id            String   @id @default(cuid())
+  tenantId      String
+  uploadId      String
+  title         String
+  description   String?  @db.Text
+  createdByUserId String?
+  createdAt     DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  upload Upload @relation(fields: [uploadId], references: [id])
+  createdBy User? @relation("DocumentCreator", fields: [createdByUserId], references: [id])
+  links  DocumentLink[]
+
+  @@index([tenantId])
+}
+
+model DocumentLink {
+  id        String   @id @default(cuid())
+  tenantId  String
+  documentId String
+  entityType DocumentEntityType
+  entityId   String
+  createdAt DateTime @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  document Document @relation(fields: [documentId], references: [id])
+
+  @@unique([tenantId, documentId, entityType, entityId])
+  @@index([tenantId, entityType, entityId])
+}
+
+model JobStage {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  color     String?
+  sortOrder Int      @default(0)
+  isClosed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  jobs   Job[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, sortOrder])
+}
+
+model JobMilestone {
+  id        String   @id @default(cuid())
+  tenantId  String
+  jobId     String
+  name      String
+  dueDate   DateTime? @db.Date
+  isComplete Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  job    Job    @relation(fields: [jobId, tenantId], references: [id, tenantId])
+
+  @@index([tenantId, jobId])
+}
+
+model JobRecurrenceRule {
+  id          String              @id @default(cuid())
+  tenantId    String
+  frequency   RecurrenceFrequency
+  interval    Int                 @default(1)
+  startDate   DateTime            @db.Date
+  endDate     DateTime?           @db.Date
+  nextRunDate DateTime?           @db.Date
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  jobs   Job[]
+
+  @@index([tenantId, frequency])
+}

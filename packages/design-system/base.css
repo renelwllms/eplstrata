@@ -1,0 +1,6 @@
+@import "./tokens.css";
+
+body {
+  background-color: var(--color-sand-50);
+  color: var(--color-ink-900);
+}

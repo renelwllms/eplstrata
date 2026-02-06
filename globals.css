@@ -1,0 +1,53 @@
+@config "./tailwind.config.cjs";
+@source "./app/**";
+@source "./components/**";
+@source "./lib/**";
+@source "./packages/**";
+
+@import "tailwindcss";
+
+@import "./packages/design-system/base.css";
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-sand-50);
+  color: var(--color-ink-900);
+}
+
+.app-shell-bg {
+  background-image:
+    radial-gradient(circle at 12% 20%, rgba(90, 167, 230, 0.2), transparent 46%),
+    radial-gradient(circle at 88% 0%, rgba(43, 124, 194, 0.18), transparent 40%),
+    linear-gradient(180deg, #f7fbff 0%, #e6f0ff 100%);
+}
+
+.card-surface {
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 12px 30px rgba(9, 9, 20, 0.12);
+  border-radius: 1rem;
+}
+
+.data-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 700ms ease-out both;
+}
