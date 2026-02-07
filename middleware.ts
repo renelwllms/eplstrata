@@ -144,6 +144,7 @@ export function middleware(request: NextRequest) {
   }
 
   const isApi = request.nextUrl.pathname.startsWith("/api");
+  const isAuthRoute = request.nextUrl.pathname.startsWith("/api/auth");
   const corsHeaders = buildCorsHeaders(request.headers.get("origin"));
 
   if (!isApi) {
@@ -158,7 +159,7 @@ export function middleware(request: NextRequest) {
     return new NextResponse(null, { status: 204, headers: corsHeaders });
   }
 
-  if (request.method !== "GET" && request.method !== "HEAD") {
+  if (request.method !== "GET" && request.method !== "HEAD" && !isAuthRoute) {
     if (!isSameOriginRequest(request)) {
       const response = NextResponse.json({ error: "Invalid origin" }, { status: 403 });
       return applyHeaders(response, corsHeaders);
