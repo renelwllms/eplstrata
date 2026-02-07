@@ -27,9 +27,13 @@ export async function storeBufferLocal(params: {
   const safeName = safeFilename(params.filename);
   const storageKey = `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}-${safeName}`;
   const fullPath = path.join(uploadsDir, storageKey);
+  const normalizedPath = path.normalize(fullPath);
+  if (!normalizedPath.startsWith(`${uploadsDir}${path.sep}`)) {
+    throw new Error("Invalid upload path");
+  }
 
-  await fs.mkdir(path.dirname(fullPath), { recursive: true });
-  await fs.writeFile(fullPath, params.buffer);
+  await fs.mkdir(path.dirname(normalizedPath), { recursive: true });
+  await fs.writeFile(normalizedPath, params.buffer);
 
   return {
     storageKey,
