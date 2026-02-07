@@ -114,10 +114,7 @@ function ensureCsrfToken(request: NextRequest) {
 }
 
 export function middleware(request: NextRequest) {
-  const ip =
-    request.ip ??
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "unknown";
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 
   const applyHeaders = (response: NextResponse, corsHeaders: Record<string, string> | null) => {
     const securityHeaders = buildSecurityHeaders();

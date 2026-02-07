@@ -8,11 +8,12 @@ import { DeleteButton } from "../../../../components/app/forms/delete-button";
 import { InlineEditPanel } from "../../../../components/app/forms/inline-edit-panel";
 import { LeadForm } from "../../../../components/app/forms/lead-form";
 
-export default async function LeadDetailPage({ params }: { params: { id: string } }) {
+export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireTenant();
   const [lead, stages, owners] = await Promise.all([
     prisma.lead.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: { stage: true, owner: true, activities: true }
     }),
     prisma.leadStage.findMany({

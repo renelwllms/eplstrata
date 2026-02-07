@@ -5,11 +5,12 @@ import { jsonOk, handleError } from "../../../../lib/api";
 import { timeEntryUpdateSchema } from "../../../../lib/validators";
 import { auditCrudStub } from "../../../../lib/audit";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("TIME");
     const service = timeEntryService(user.tenantId, prisma);
-    const entry = await service.get(params.id);
+    const entry = await service.get(id);
 
     if (entry && user.role === "STAFF" && entry.userId !== user.id) {
       throw new Error("Forbidden");
@@ -21,14 +22,15 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("TIME");
     const body = await request.json();
     const payload = timeEntryUpdateSchema.parse(body);
 
     const service = timeEntryService(user.tenantId, prisma);
-    const existing = await service.get(params.id);
+    const existing = await service.get(id);
 
     if (existing && user.role === "STAFF" && existing.userId !== user.id) {
       throw new Error("Forbidden");
@@ -37,7 +39,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       throw new Error("Timesheet submitted");
     }
 
-    const entry = await service.update(params.id, payload);
+    const entry = await service.update(id, payload);
 
     await auditCrudStub({
       tenantId: user.tenantId,
@@ -53,11 +55,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("TIME");
     const service = timeEntryService(user.tenantId, prisma);
-    const existing = await service.get(params.id);
+    const existing = await service.get(id);
 
     if (existing && user.role === "STAFF" && existing.userId !== user.id) {
       throw new Error("Forbidden");
@@ -66,7 +69,7 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
       throw new Error("Timesheet submitted");
     }
 
-    const entry = await service.remove(params.id);
+    const entry = await service.remove(id);
 
     await auditCrudStub({
       tenantId: user.tenantId,

@@ -6,36 +6,38 @@ import { leadUpdateSchema } from "../../../../lib/validators";
 import { auditCrudStub } from "../../../../lib/audit";
 import { assertLeadAccess } from "../../../../lib/lead-access";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("LEADS");
     await assertLeadAccess({
       tenantId: user.tenantId,
       userId: user.id,
       role: user.role,
-      leadId: params.id
+      leadId: id
     });
     const service = leadService(user.tenantId, prisma);
-    const lead = await service.get(params.id);
+    const lead = await service.get(id);
     return jsonOk({ data: lead });
   } catch (error) {
     return handleError(error);
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("LEADS");
     await assertLeadAccess({
       tenantId: user.tenantId,
       userId: user.id,
       role: user.role,
-      leadId: params.id
+      leadId: id
     });
     const body = await request.json();
     const payload = leadUpdateSchema.parse(body);
     const service = leadService(user.tenantId, prisma);
-    const lead = await service.update(params.id, payload);
+    const lead = await service.update(id, payload);
 
     await auditCrudStub({
       tenantId: user.tenantId,
@@ -51,17 +53,18 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("LEADS");
     await assertLeadAccess({
       tenantId: user.tenantId,
       userId: user.id,
       role: user.role,
-      leadId: params.id
+      leadId: id
     });
     const service = leadService(user.tenantId, prisma);
-    const lead = await service.remove(params.id);
+    const lead = await service.remove(id);
 
     await auditCrudStub({
       tenantId: user.tenantId,

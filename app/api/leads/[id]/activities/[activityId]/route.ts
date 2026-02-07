@@ -8,20 +8,20 @@ import { assertLeadAccess } from "../../../../../../lib/lead-access";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string; activityId: string } }
-) {
+  { params }: { params: Promise<{ id: string; activityId: string }> }
+) {  const { id, activityId } = await params;
   try {
     const { user } = await requireWriteAccess("LEADS");
     await assertLeadAccess({
       tenantId: user.tenantId,
       userId: user.id,
       role: user.role,
-      leadId: params.id
+      leadId: id
     });
     const body = await request.json();
     const payload = leadActivityUpdateSchema.parse(body);
     const service = leadActivityService(user.tenantId, prisma);
-    const activity = await service.update(params.activityId, payload);
+    const activity = await service.update(activityId, payload);
 
     await auditCrudStub({
       tenantId: user.tenantId,
@@ -39,18 +39,18 @@ export async function PUT(
 
 export async function DELETE(
   _: Request,
-  { params }: { params: { id: string; activityId: string } }
-) {
+  { params }: { params: Promise<{ id: string; activityId: string }> }
+) {  const { id, activityId } = await params;
   try {
     const { user } = await requireWriteAccess("LEADS");
     await assertLeadAccess({
       tenantId: user.tenantId,
       userId: user.id,
       role: user.role,
-      leadId: params.id
+      leadId: id
     });
     const service = leadActivityService(user.tenantId, prisma);
-    const activity = await service.remove(params.activityId);
+    const activity = await service.remove(activityId);
 
     await auditCrudStub({
       tenantId: user.tenantId,

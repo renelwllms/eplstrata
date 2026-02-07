@@ -7,7 +7,8 @@ import { invoiceService } from "../../../../../lib/services/invoices";
 import { auditCrudStub } from "../../../../../lib/audit";
 import { tenantScopedPrisma } from "../../../../../lib/tenant";
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("INVOICES");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
@@ -17,7 +18,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const payload = billableSummarySchema.parse(body);
 
     const scoped = tenantScopedPrisma(user.tenantId, prisma);
-    const job = await scoped.job.findUnique({ where: { id: params.id } });
+    const job = await scoped.job.findUnique({ where: { id: id } });
 
     if (!job) {
       return jsonOk({ data: null }, 404);
@@ -33,7 +34,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
     const summary = await getBillableSummary({
       tenantId: user.tenantId,
-      jobId: params.id,
+      jobId: id,
       client: prisma,
       timeEntryIds: payload.timeEntryIds,
       costEntryIds: payload.costEntryIds

@@ -9,11 +9,12 @@ import { InvoiceForm } from "../../../../components/app/forms/invoice-form";
 import { Button } from "../../../../components/ui/button";
 import Link from "next/link";
 
-export default async function InvoiceDetailPage({ params }: { params: { id: string } }) {
+export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireTenant();
   const [invoice, clients, jobs, templates, jobLinks] = await Promise.all([
     prisma.invoice.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: { client: true, lineItems: true }
     }),
     prisma.client.findMany({
@@ -32,7 +33,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
       select: { id: true, name: true }
     }),
     prisma.invoiceJobLink.findMany({
-      where: { tenantId: user.tenantId, invoiceId: params.id },
+      where: { tenantId: user.tenantId, invoiceId: id },
       select: { jobId: true }
     })
   ]);

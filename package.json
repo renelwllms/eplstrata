@@ -7,7 +7,7 @@
     "dev:app": "PORT=3002 next dev -p 3002",
     "dev:api": "APP_MODE=api PORT=3003 next dev -p 3003",
     "dev:marketing": "npm --prefix apps/marketing run dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",

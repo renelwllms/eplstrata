@@ -3,10 +3,11 @@ import { requireTenant } from "../../../../../lib/session";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../../components/ui/card";
 import { DocumentForm } from "../../../../../components/app/forms/document-form";
 
-export default async function EditDocumentPage({ params }: { params: { id: string } }) {
+export default async function EditDocumentPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireTenant();
   const document = await prisma.document.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     select: { id: true, tenantId: true, title: true, description: true }
   });
 

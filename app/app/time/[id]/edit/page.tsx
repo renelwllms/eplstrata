@@ -3,10 +3,11 @@ import { requireTenant } from "../../../../../lib/session";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../../components/ui/card";
 import { TimeEntryForm } from "../../../../../components/app/forms/time-entry-form";
 
-export default async function EditTimeEntryPage({ params }: { params: { id: string } }) {
+export default async function EditTimeEntryPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireTenant();
   const [entry, jobs, tasks] = await Promise.all([
-    prisma.timeEntry.findUnique({ where: { id: params.id } }),
+    prisma.timeEntry.findUnique({ where: { id: id } }),
     prisma.job.findMany({
       where: { tenantId: user.tenantId },
       orderBy: { name: "asc" },

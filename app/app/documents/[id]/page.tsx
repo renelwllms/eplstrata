@@ -5,10 +5,11 @@ import { DeleteButton } from "../../../../components/app/forms/delete-button";
 import { InlineEditPanel } from "../../../../components/app/forms/inline-edit-panel";
 import { DocumentForm } from "../../../../components/app/forms/document-form";
 
-export default async function DocumentDetailPage({ params }: { params: { id: string } }) {
+export default async function DocumentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireTenant();
   const document = await prisma.document.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: { upload: true }
   });
 

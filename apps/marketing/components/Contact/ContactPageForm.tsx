@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { withCsrfHeaders } from "../../../lib/csrf";
+import { withCsrfHeaders } from "../../lib/csrf";
 
 const initialForm = {
   name: "",

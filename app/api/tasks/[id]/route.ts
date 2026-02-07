@@ -5,18 +5,20 @@ import { jsonOk, handleError } from "../../../../lib/api";
 import { taskUpdateSchema } from "../../../../lib/validators";
 import { auditCrudStub } from "../../../../lib/audit";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("TASKS");
     const service = taskService(user.tenantId, prisma);
-    const task = await service.get(params.id);
+    const task = await service.get(id);
     return jsonOk({ data: task });
   } catch (error) {
     return handleError(error);
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("TASKS");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
@@ -26,7 +28,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const payload = taskUpdateSchema.parse(body);
 
     const service = taskService(user.tenantId, prisma);
-    const task = await service.update(params.id, payload);
+    const task = await service.update(id, payload);
 
     await auditCrudStub({
       tenantId: user.tenantId,
@@ -42,14 +44,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("TASKS");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
       throw new Error("Insufficient role");
     }
     const service = taskService(user.tenantId, prisma);
-    const task = await service.remove(params.id);
+    const task = await service.remove(id);
 
     await auditCrudStub({
       tenantId: user.tenantId,

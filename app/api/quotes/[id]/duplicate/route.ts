@@ -4,11 +4,12 @@ import { requireWriteAccess } from "../../../../../lib/guards";
 import { jsonOk, handleError } from "../../../../../lib/api";
 import { consumeNextNumber } from "../../../../../lib/numbering";
 
-export async function POST(_: Request, { params }: { params: { id: string } }) {
+export async function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("QUOTES");
     const quote = await prisma.quote.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: { lineItems: true }
     });
 

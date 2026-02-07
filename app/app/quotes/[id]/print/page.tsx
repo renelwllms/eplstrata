@@ -8,10 +8,11 @@ function formatCurrency(value: number, currency: string) {
   return new Intl.NumberFormat("en-NZ", { style: "currency", currency }).format(value);
 }
 
-export default async function QuotePrintPage({ params }: { params: { id: string } }) {
+export default async function QuotePrintPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireTenant();
   const quote = await prisma.quote.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: { client: true, lineItems: true }
   });
   const settings = await prisma.tenantSettings.findUnique({ where: { tenantId: user.tenantId } });

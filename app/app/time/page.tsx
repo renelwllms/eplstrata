@@ -12,11 +12,12 @@ import { BulkList } from "../../../components/app/lists/bulk-list";
 export default async function TimePage({
   searchParams
 }: {
-  searchParams?: { date?: string };
+  searchParams?: Promise<{ date?: string }>;
 }) {
   const user = await requireTenant();
   const billing = await getTenantBillingContext(user.tenantId);
-  const date = searchParams?.date ?? formatDate(new Date());
+  const resolvedParams = await searchParams;
+  const date = resolvedParams?.date ?? formatDate(new Date());
   const service = timeEntryService(user.tenantId, prisma);
   const summary = await service.weekSummary(date, user.id, user.role);
   const { start, end } = getWeekRange(date);

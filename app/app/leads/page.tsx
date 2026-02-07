@@ -12,12 +12,13 @@ import { leadStagePalette } from "../../../components/app/leads/lead-stage-palet
 export default async function LeadsPage({
   searchParams
 }: {
-  searchParams?: { view?: string };
+  searchParams?: Promise<{ view?: string }>;
 }) {
   const user = await requireTenant();
   const billing = await getTenantBillingContext(user.tenantId);
   const hasAccess = billing.featureFlags.has("LEADS") || user.platformRole === "SUPER_ADMIN";
-  const view = searchParams?.view === "list" ? "list" : "board";
+  const resolvedParams = await searchParams;
+  const view = resolvedParams?.view === "list" ? "list" : "board";
 
   const [stages, leads] = hasAccess
     ? await Promise.all([

@@ -1,11 +1,12 @@
 import SignInForm from "./SignInForm";
 
-export default function SignInPage({
+export default async function SignInPage({
   searchParams
 }: {
-  searchParams?: { callbackUrl?: string };
+  searchParams?: Promise<{ callbackUrl?: string }>;
 }) {
-  const callbackUrl = searchParams?.callbackUrl || "/app/dashboard";
+  const resolvedParams = await searchParams;
+  const callbackUrl = resolvedParams?.callbackUrl || "/app/dashboard";
 
   return <SignInForm callbackUrl={callbackUrl} />;
 }

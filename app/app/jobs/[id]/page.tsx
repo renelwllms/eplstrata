@@ -6,11 +6,12 @@ import { DeleteButton } from "../../../../components/app/forms/delete-button";
 import { InlineEditPanel } from "../../../../components/app/forms/inline-edit-panel";
 import { JobForm } from "../../../../components/app/forms/job-form";
 
-export default async function JobDetailPage({ params }: { params: { id: string } }) {
+export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireTenant();
   const [job, clients, members] = await Promise.all([
     prisma.job.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: { client: true, milestones: true, assignments: true }
     }),
     prisma.client.findMany({

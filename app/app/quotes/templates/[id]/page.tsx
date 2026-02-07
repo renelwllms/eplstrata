@@ -4,10 +4,11 @@ import { requireTenant } from "../../../../../lib/session";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../../components/ui/card";
 import { DeleteButton } from "../../../../../components/app/forms/delete-button";
 
-export default async function QuoteTemplateDetailPage({ params }: { params: { id: string } }) {
+export default async function QuoteTemplateDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireTenant();
   const template = await prisma.quoteTemplate.findUnique({
-    where: { id: params.id }
+    where: { id: id }
   });
 
   if (!template || template.tenantId !== user.tenantId) {

@@ -6,11 +6,12 @@ import { costUpdateSchema } from "../../../../lib/validators";
 import { auditCrudStub } from "../../../../lib/audit";
 import { assertJobAccess } from "../../../../lib/job-access";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("COSTS");
     const service = costService(user.tenantId, prisma);
-    const cost = await service.get(params.id);
+    const cost = await service.get(id);
 
     if (cost && user.role === "STAFF") {
       await assertJobAccess({
@@ -27,7 +28,8 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("COSTS");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
@@ -37,7 +39,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const payload = costUpdateSchema.parse(body);
 
     const service = costService(user.tenantId, prisma);
-    const cost = await service.update(params.id, payload);
+    const cost = await service.update(id, payload);
 
     await auditCrudStub({
       tenantId: user.tenantId,
@@ -53,14 +55,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("COSTS");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
       throw new Error("Insufficient role");
     }
     const service = costService(user.tenantId, prisma);
-    const cost = await service.remove(params.id);
+    const cost = await service.remove(id);
 
     await auditCrudStub({
       tenantId: user.tenantId,

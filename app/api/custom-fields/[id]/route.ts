@@ -5,18 +5,20 @@ import { jsonOk, handleError } from "../../../../lib/api";
 import { customFieldUpdateSchema } from "../../../../lib/validators";
 import { auditCrudStub } from "../../../../lib/audit";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("CUSTOM_FIELDS");
     const service = customFieldService(user.tenantId, prisma);
-    const field = await service.get(params.id);
+    const field = await service.get(id);
     return jsonOk({ data: field });
   } catch (error) {
     return handleError(error);
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("CUSTOM_FIELDS");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
@@ -25,7 +27,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const body = await request.json();
     const payload = customFieldUpdateSchema.parse(body);
     const service = customFieldService(user.tenantId, prisma);
-    const updated = await service.update(params.id, payload);
+    const updated = await service.update(id, payload);
 
     await auditCrudStub({
       tenantId: user.tenantId,
@@ -41,14 +43,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("CUSTOM_FIELDS");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
       throw new Error("Insufficient role");
     }
     const service = customFieldService(user.tenantId, prisma);
-    const removed = await service.remove(params.id);
+    const removed = await service.remove(id);
 
     await auditCrudStub({
       tenantId: user.tenantId,

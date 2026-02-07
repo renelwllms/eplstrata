@@ -5,22 +5,24 @@ import { jsonOk, handleError } from "../../../../lib/api";
 import { auditCrudStub } from "../../../../lib/audit";
 import { documentUpdateSchema } from "../../../../lib/validators";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("DOCUMENTS");
     const service = documentService(user.tenantId, prisma);
-    const doc = await service.get(params.id);
+    const doc = await service.get(id);
     return jsonOk({ data: doc });
   } catch (error) {
     return handleError(error);
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("DOCUMENTS");
     const service = documentService(user.tenantId, prisma);
-    const doc = await service.remove(params.id);
+    const doc = await service.remove(id);
 
     await auditCrudStub({
       tenantId: user.tenantId,
@@ -36,13 +38,14 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("DOCUMENTS");
     const body = await request.json();
     const payload = documentUpdateSchema.parse(body);
     const doc = await prisma.document.update({
-      where: { id: params.id },
+      where: { id: id },
       data: payload
     });
 

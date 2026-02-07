@@ -5,7 +5,8 @@ import { getBillableSummary } from "../../../../../lib/services/billables";
 import { billableSummarySchema } from "../../../../../lib/validators";
 import { assertJobAccess } from "../../../../../lib/job-access";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("INVOICES");
 
@@ -14,13 +15,13 @@ export async function GET(request: Request, { params }: { params: { id: string }
         tenantId: user.tenantId,
         userId: user.id,
         role: user.role,
-        jobId: params.id
+        jobId: id
       });
     }
 
     const summary = await getBillableSummary({
       tenantId: user.tenantId,
-      jobId: params.id,
+      jobId: id,
       client: prisma
     });
 
@@ -30,7 +31,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("INVOICES");
 
@@ -39,7 +41,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
         tenantId: user.tenantId,
         userId: user.id,
         role: user.role,
-        jobId: params.id
+        jobId: id
       });
     }
 
@@ -48,7 +50,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
     const summary = await getBillableSummary({
       tenantId: user.tenantId,
-      jobId: params.id,
+      jobId: id,
       client: prisma,
       timeEntryIds: payload.timeEntryIds,
       costEntryIds: payload.costEntryIds

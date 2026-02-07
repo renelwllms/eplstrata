@@ -3,11 +3,12 @@ import { requireTenant } from "../../../../../lib/session";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../../components/ui/card";
 import { JobForm } from "../../../../../components/app/forms/job-form";
 
-export default async function EditJobPage({ params }: { params: { id: string } }) {
+export default async function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireTenant();
   const [job, clients, members] = await Promise.all([
     prisma.job.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       select: {
         id: true,
         tenantId: true,

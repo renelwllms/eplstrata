@@ -6,18 +6,19 @@ import { jobRecurrenceCreateSchema, jobRecurrenceUpdateSchema } from "../../../.
 import { auditCrudStub } from "../../../../../lib/audit";
 import { assertJobAccess } from "../../../../../lib/job-access";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("JOBS");
     await assertJobAccess({
       tenantId: user.tenantId,
       userId: user.id,
       role: user.role,
-      jobId: params.id
+      jobId: id
     });
 
     const job = await prisma.job.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       select: { recurrenceRuleId: true }
     });
 
@@ -33,14 +34,15 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("JOBS");
     await assertJobAccess({
       tenantId: user.tenantId,
       userId: user.id,
       role: user.role,
-      jobId: params.id
+      jobId: id
     });
     const body = await request.json();
     const payload = jobRecurrenceCreateSchema.parse(body);
@@ -48,7 +50,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const rule = await service.create(payload);
 
     await prisma.job.update({
-      where: { id: params.id },
+      where: { id: id },
       data: { recurrenceRuleId: rule.id }
     });
 
@@ -66,19 +68,20 @@ export async function POST(request: Request, { params }: { params: { id: string 
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("JOBS");
     await assertJobAccess({
       tenantId: user.tenantId,
       userId: user.id,
       role: user.role,
-      jobId: params.id
+      jobId: id
     });
     const body = await request.json();
     const payload = jobRecurrenceUpdateSchema.parse(body);
     const job = await prisma.job.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       select: { recurrenceRuleId: true }
     });
 
@@ -103,18 +106,19 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("JOBS");
     await assertJobAccess({
       tenantId: user.tenantId,
       userId: user.id,
       role: user.role,
-      jobId: params.id
+      jobId: id
     });
 
     const job = await prisma.job.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       select: { recurrenceRuleId: true }
     });
 
@@ -126,7 +130,7 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
     const rule = await service.remove(job.recurrenceRuleId);
 
     await prisma.job.update({
-      where: { id: params.id },
+      where: { id: id },
       data: { recurrenceRuleId: null }
     });
 

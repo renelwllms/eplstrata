@@ -8,11 +8,12 @@ function buildAlias(jobNumber: string) {
   return `job-${slug}@inbound.local`;
 }
 
-export async function POST(_: Request, { params }: { params: { id: string } }) {
+export async function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("DOCUMENTS");
     const job = await prisma.job.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       select: { id: true, tenantId: true, jobNumber: true, inboundEmail: true }
     });
 

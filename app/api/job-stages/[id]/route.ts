@@ -5,18 +5,20 @@ import { jsonOk, handleError } from "../../../../lib/api";
 import { jobStageUpdateSchema } from "../../../../lib/validators";
 import { auditCrudStub } from "../../../../lib/audit";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("CUSTOMISATION");
     const service = jobStageService(user.tenantId, prisma);
-    const stage = await service.get(params.id);
+    const stage = await service.get(id);
     return jsonOk({ data: stage });
   } catch (error) {
     return handleError(error);
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("CUSTOMISATION");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
@@ -25,7 +27,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const body = await request.json();
     const payload = jobStageUpdateSchema.parse(body);
     const service = jobStageService(user.tenantId, prisma);
-    const stage = await service.update(params.id, payload);
+    const stage = await service.update(id, payload);
 
     await auditCrudStub({
       tenantId: user.tenantId,
@@ -41,14 +43,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("CUSTOMISATION");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
       throw new Error("Insufficient role");
     }
     const service = jobStageService(user.tenantId, prisma);
-    const stage = await service.remove(params.id);
+    const stage = await service.remove(id);
 
     await auditCrudStub({
       tenantId: user.tenantId,

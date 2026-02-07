@@ -6,18 +6,19 @@ import { jobUpdateSchema } from "../../../../lib/validators";
 import { auditCrudStub } from "../../../../lib/audit";
 import { assertJobAccess } from "../../../../lib/job-access";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("JOBS");
     const service = jobService(user.tenantId, prisma);
-    const job = await service.get(params.id);
+    const job = await service.get(id);
 
     if (job && user.role === "STAFF") {
       await assertJobAccess({
         tenantId: user.tenantId,
         userId: user.id,
         role: user.role,
-        jobId: params.id
+        jobId: id
       });
     }
 
@@ -27,7 +28,8 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("JOBS");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
@@ -38,7 +40,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const { jobNumber, assigneeIds, ...rest } = payload;
 
     const service = jobService(user.tenantId, prisma);
-    const job = await service.update(params.id, rest);
+    const job = await service.update(id, rest);
 
     if (assigneeIds) {
       await prisma.$transaction([
@@ -70,14 +72,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("JOBS");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
       throw new Error("Insufficient role");
     }
     const service = jobService(user.tenantId, prisma);
-    const job = await service.remove(params.id);
+    const job = await service.remove(id);
 
     await auditCrudStub({
       tenantId: user.tenantId,

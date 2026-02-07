@@ -3,11 +3,12 @@ import { requireTenant } from "../../../../../lib/session";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../../components/ui/card";
 import { QuoteForm } from "../../../../../components/app/forms/quote-form";
 
-export default async function EditQuotePage({ params }: { params: { id: string } }) {
+export default async function EditQuotePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireTenant();
   const [quote, clients, jobs, templates] = await Promise.all([
     prisma.quote.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: { lineItems: true }
     }),
     prisma.client.findMany({

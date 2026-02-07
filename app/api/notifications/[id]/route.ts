@@ -4,11 +4,12 @@ import { requireWriteAccess } from "../../../../lib/guards";
 import { jsonOk, handleError } from "../../../../lib/api";
 import { auditCrudStub } from "../../../../lib/audit";
 
-export async function PUT(_: Request, { params }: { params: { id: string } }) {
+export async function PUT(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("NOTIFICATIONS");
     const service = notificationService(user.tenantId, prisma);
-    const updated = await service.markRead(params.id);
+    const updated = await service.markRead(id);
 
     await auditCrudStub({
       tenantId: user.tenantId,

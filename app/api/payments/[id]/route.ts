@@ -6,11 +6,12 @@ import { paymentUpdateSchema } from "../../../../lib/validators";
 import { auditCrudStub } from "../../../../lib/audit";
 import { assertJobAccess } from "../../../../lib/job-access";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("PAYMENTS");
     const service = paymentService(user.tenantId, prisma);
-    const payment = await service.get(params.id);
+    const payment = await service.get(id);
 
     if (payment && user.role === "STAFF") {
       const invoice = await prisma.invoice.findUnique({
@@ -34,7 +35,8 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("PAYMENTS");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
@@ -44,7 +46,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const payload = paymentUpdateSchema.parse(body);
 
     const service = paymentService(user.tenantId, prisma);
-    const payment = await service.update(params.id, payload);
+    const payment = await service.update(id, payload);
 
     await auditCrudStub({
       tenantId: user.tenantId,
@@ -60,14 +62,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("PAYMENTS");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
       throw new Error("Insufficient role");
     }
     const service = paymentService(user.tenantId, prisma);
-    const payment = await service.remove(params.id);
+    const payment = await service.remove(id);
 
     await auditCrudStub({
       tenantId: user.tenantId,

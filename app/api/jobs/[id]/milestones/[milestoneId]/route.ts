@@ -8,20 +8,20 @@ import { assertJobAccess } from "../../../../../../lib/job-access";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string; milestoneId: string } }
-) {
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
+) {  const { id, milestoneId } = await params;
   try {
     const { user } = await requireWriteAccess("JOBS");
     await assertJobAccess({
       tenantId: user.tenantId,
       userId: user.id,
       role: user.role,
-      jobId: params.id
+      jobId: id
     });
     const body = await request.json();
     const payload = jobMilestoneUpdateSchema.parse(body);
     const service = jobMilestoneService(user.tenantId, prisma);
-    const milestone = await service.update(params.milestoneId, payload);
+    const milestone = await service.update(milestoneId, payload);
 
     await auditCrudStub({
       tenantId: user.tenantId,
@@ -39,18 +39,18 @@ export async function PUT(
 
 export async function DELETE(
   _: Request,
-  { params }: { params: { id: string; milestoneId: string } }
-) {
+  { params }: { params: Promise<{ id: string; milestoneId: string }> }
+) {  const { id, milestoneId } = await params;
   try {
     const { user } = await requireWriteAccess("JOBS");
     await assertJobAccess({
       tenantId: user.tenantId,
       userId: user.id,
       role: user.role,
-      jobId: params.id
+      jobId: id
     });
     const service = jobMilestoneService(user.tenantId, prisma);
-    const milestone = await service.remove(params.milestoneId);
+    const milestone = await service.remove(milestoneId);
 
     await auditCrudStub({
       tenantId: user.tenantId,

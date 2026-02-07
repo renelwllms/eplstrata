@@ -3,11 +3,12 @@ import { requireTenant } from "../../../../../lib/session";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../../components/ui/card";
 import { LeadForm } from "../../../../../components/app/forms/lead-form";
 
-export default async function EditLeadPage({ params }: { params: { id: string } }) {
+export default async function EditLeadPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireTenant();
   const [lead, stages, owners] = await Promise.all([
     prisma.lead.findUnique({
-      where: { id: params.id }
+      where: { id: id }
     }),
     prisma.leadStage.findMany({
       where: { tenantId: user.tenantId },

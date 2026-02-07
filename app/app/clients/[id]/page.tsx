@@ -5,10 +5,11 @@ import { DeleteButton } from "../../../../components/app/forms/delete-button";
 import { InlineEditPanel } from "../../../../components/app/forms/inline-edit-panel";
 import { ClientForm } from "../../../../components/app/forms/client-form";
 
-export default async function ClientDetailPage({ params }: { params: { id: string } }) {
+export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireTenant();
   const client = await prisma.client.findUnique({
-    where: { id: params.id }
+    where: { id: id }
   });
 
   if (!client || client.tenantId !== user.tenantId) {

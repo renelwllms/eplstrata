@@ -7,11 +7,12 @@ import { auditCrudStub } from "../../../../lib/audit";
 import { assertJobAccess } from "../../../../lib/job-access";
 import { sendEmail } from "../../../../lib/mailer";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("QUOTES");
     const service = quoteService(user.tenantId, prisma);
-    const quote = await service.get(params.id);
+    const quote = await service.get(id);
 
     if (quote?.jobId && user.role === "STAFF") {
       await assertJobAccess({
@@ -28,7 +29,8 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("QUOTES");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
@@ -46,7 +48,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 
     const existing = await prisma.quote.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: { client: true }
     });
 
@@ -55,7 +57,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 
     const service = quoteService(user.tenantId, prisma);
-    const quote = await service.update(params.id, {
+    const quote = await service.update(id, {
       status: payload.status,
       approvalStatus: payload.approvalStatus,
       isMaster: payload.isMaster,
@@ -115,14 +117,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("QUOTES");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
       throw new Error("Insufficient role");
     }
     const service = quoteService(user.tenantId, prisma);
-    const quote = await service.remove(params.id);
+    const quote = await service.remove(id);
 
     await auditCrudStub({
       tenantId: user.tenantId,

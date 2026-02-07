@@ -7,11 +7,12 @@ import { auditCrudStub } from "../../../../lib/audit";
 import { assertJobAccess } from "../../../../lib/job-access";
 import { sendEmail } from "../../../../lib/mailer";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("INVOICES");
     const service = invoiceService(user.tenantId, prisma);
-    const invoice = await service.get(params.id);
+    const invoice = await service.get(id);
 
     if (invoice?.jobId && user.role === "STAFF") {
       await assertJobAccess({
@@ -28,7 +29,8 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("INVOICES");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
@@ -46,7 +48,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 
     const existing = await prisma.invoice.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: { client: true }
     });
 
@@ -55,7 +57,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 
     const service = invoiceService(user.tenantId, prisma);
-    const invoice = await service.update(params.id, {
+    const invoice = await service.update(id, {
       status: payload.status,
       billingMode: payload.billingMode,
       progressPercent: payload.progressPercent,
@@ -122,14 +124,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("INVOICES");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
       throw new Error("Insufficient role");
     }
     const service = invoiceService(user.tenantId, prisma);
-    const invoice = await service.remove(params.id);
+    const invoice = await service.remove(id);
 
     await auditCrudStub({
       tenantId: user.tenantId,

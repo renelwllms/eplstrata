@@ -6,18 +6,19 @@ import { phaseCreateSchema } from "../../../../../lib/validators";
 import { auditCrudStub } from "../../../../../lib/audit";
 import { assertJobAccess } from "../../../../../lib/job-access";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireFeature("JOBS");
     const service = phaseService(user.tenantId, prisma);
-    const phases = await service.list(params.id);
+    const phases = await service.list(id);
 
     if (user.role === "STAFF") {
       await assertJobAccess({
         tenantId: user.tenantId,
         userId: user.id,
         role: user.role,
-        jobId: params.id
+        jobId: id
       });
     }
 
@@ -27,7 +28,8 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   }
 }
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const { user } = await requireWriteAccess("JOBS");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
@@ -37,7 +39,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const payload = phaseCreateSchema.parse(body);
 
     const service = phaseService(user.tenantId, prisma);
-    const phase = await service.create(params.id, payload);
+    const phase = await service.create(id, payload);
 
     await auditCrudStub({
       tenantId: user.tenantId,

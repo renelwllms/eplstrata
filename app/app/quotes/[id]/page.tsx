@@ -9,11 +9,12 @@ import { QuoteForm } from "../../../../components/app/forms/quote-form";
 import { Button } from "../../../../components/ui/button";
 import Link from "next/link";
 
-export default async function QuoteDetailPage({ params }: { params: { id: string } }) {
+export default async function QuoteDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireTenant();
   const [quote, clients, jobs, templates] = await Promise.all([
     prisma.quote.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: { client: true, lineItems: true }
     }),
     prisma.client.findMany({

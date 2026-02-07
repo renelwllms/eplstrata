@@ -8,19 +8,19 @@ import { assertJobAccess } from "../../../../../../lib/job-access";
 
 export async function GET(
   _: Request,
-  { params }: { params: { id: string; phaseId: string } }
-) {
+  { params }: { params: Promise<{ id: string; phaseId: string }> }
+) {  const { id, phaseId } = await params;
   try {
     const { user } = await requireFeature("JOBS");
     const service = phaseService(user.tenantId, prisma);
-    const phase = await service.get(params.phaseId);
+    const phase = await service.get(phaseId);
 
     if (phase && user.role === "STAFF") {
       await assertJobAccess({
         tenantId: user.tenantId,
         userId: user.id,
         role: user.role,
-        jobId: params.id
+        jobId: id
       });
     }
 
@@ -32,8 +32,8 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string; phaseId: string } }
-) {
+  { params }: { params: Promise<{ id: string; phaseId: string }> }
+) {  const { id, phaseId } = await params;
   try {
     const { user } = await requireWriteAccess("JOBS");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
@@ -43,7 +43,7 @@ export async function PUT(
     const payload = phaseUpdateSchema.parse(body);
 
     const service = phaseService(user.tenantId, prisma);
-    const phase = await service.update(params.phaseId, payload);
+    const phase = await service.update(phaseId, payload);
 
     await auditCrudStub({
       tenantId: user.tenantId,
@@ -61,15 +61,15 @@ export async function PUT(
 
 export async function DELETE(
   _: Request,
-  { params }: { params: { id: string; phaseId: string } }
-) {
+  { params }: { params: Promise<{ id: string; phaseId: string }> }
+) {  const { id, phaseId } = await params;
   try {
     const { user } = await requireWriteAccess("JOBS");
     if (user.role !== "OWNER" && user.role !== "ADMIN") {
       throw new Error("Insufficient role");
     }
     const service = phaseService(user.tenantId, prisma);
-    const phase = await service.remove(params.phaseId);
+    const phase = await service.remove(phaseId);
 
     await auditCrudStub({
       tenantId: user.tenantId,
