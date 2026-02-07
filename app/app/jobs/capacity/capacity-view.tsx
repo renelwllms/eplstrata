@@ -18,6 +18,7 @@ import {
 import { Button } from "../../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../components/ui/card";
 import type { CapacityPayload } from "../../../../lib/capacity";
+import { withCsrfHeaders } from "../../../../lib/csrf";
 
 const rangePresets = [
   { id: "this-week", label: "This Week", offset: 0 },
@@ -177,7 +178,7 @@ export default function CapacityView({ initialData }: { initialData: CapacityPay
   const saveSettings = async (settings: { workingHoursPerDay: number; workingDays: string[]; allowOvertime: boolean }) => {
     await fetch("/api/capacity/settings", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: withCsrfHeaders(),
       body: JSON.stringify({
         workingHoursPerDay: settings.workingHoursPerDay,
         workingDays: settings.workingDays.join(","),
@@ -191,7 +192,7 @@ export default function CapacityView({ initialData }: { initialData: CapacityPay
   const saveOverride = async (payload: { userId: string; weeklyCapacityHours: number; role?: string; startDate?: string; endDate?: string }) => {
     await fetch("/api/capacity/overrides", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: withCsrfHeaders(),
       body: JSON.stringify(payload)
     });
     await refresh();
@@ -200,7 +201,7 @@ export default function CapacityView({ initialData }: { initialData: CapacityPay
   const saveLeave = async (payload: { userId: string; startDate: string; endDate: string; hoursPerDay?: number }) => {
     await fetch("/api/capacity/leave", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: withCsrfHeaders(),
       body: JSON.stringify(payload)
     });
     await refresh();

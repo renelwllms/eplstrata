@@ -1,0 +1,49 @@
+name: Security Checks
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - name: Install root deps
+        run: npm ci
+      - name: Root npm audit (high+)
+        run: npm audit --audit-level=high
+      - name: Root audit-ci (high+)
+        run: npx -y audit-ci --high
+      - name: Install marketing deps
+        run: npm ci --prefix apps/marketing
+      - name: Marketing npm audit (high+)
+        run: npm audit --audit-level=high --prefix apps/marketing
+      - name: Marketing audit-ci (high+)
+        run: npx -y audit-ci --high --package-manager npm --prefix apps/marketing
+
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: semgrep/semgrep-action@v1
+        with:
+          config: auto
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: gitleaks/gitleaks-action@v2
+        with:
+          args: detect --source . --no-git --redact

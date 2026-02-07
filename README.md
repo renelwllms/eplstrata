@@ -40,9 +40,14 @@ npm run dev
    - `DATABASE_URL`
    - `NEXTAUTH_URL`
    - `NEXTAUTH_SECRET`
+   - `APP_BASE_URL` (public app URL for links)
    - `SERVER_LOG_LEVEL`
    - `RATE_LIMIT_MAX`
    - `RATE_LIMIT_WINDOW_MS`
+   - `SECURITY_HEADERS_MODE` (optional: `relaxed` or `strict`)
+   - `CORS_ALLOWED_ORIGINS` (optional, comma-separated)
+   - `UPLOAD_MAX_BYTES` (optional)
+   - `UPLOAD_ALLOWED_MIME` (optional, comma-separated)
 2. Install dependencies
 
 ```bash
@@ -84,3 +89,7 @@ npm run start
 - Rate limits set for production traffic.
 - Seeding is disabled in production (`NODE_ENV=production`).
 - PWA assets available in production build.
+
+## Security Notes
+- JSON `fetch` calls to `/api/*` should include CSRF headers via `withCsrfHeaders()` from `lib/csrf.ts`.
+- Multipart HTML form uploads remain same-origin only and rely on Origin enforcement in `app/api/uploads/route.ts`.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { withCsrfHeaders } from "../../../lib/csrf";
 
 const initialForm = {
   name: "",
@@ -32,7 +33,7 @@ const ContactPageForm = () => {
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: withCsrfHeaders(),
         body: JSON.stringify(form),
       });
 
