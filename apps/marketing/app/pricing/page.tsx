@@ -10,7 +10,7 @@ const pricingPlans = [
   {
     name: "Starter",
     tagline: "Best for small teams getting organised",
-    price: "From $X / user / month",
+    price: "$19.99 / user / month",
     cta: "Get Started",
     ctaHref: "/contact",
     features: [
@@ -25,7 +25,7 @@ const pricingPlans = [
   {
     name: "Professional",
     tagline: "For growing service teams that need full visibility",
-    price: "From $X / user / month",
+    price: "$39.99 / user / month",
     cta: "Book a Demo",
     ctaHref: "/contact",
     highlight: "Most Popular",
@@ -42,7 +42,7 @@ const pricingPlans = [
   {
     name: "Enterprise",
     tagline: "For larger organisations with complex workflows",
-    price: "Custom pricing",
+    price: "Contact us",
     cta: "Talk to Sales",
     ctaHref: "/contact",
     features: [
